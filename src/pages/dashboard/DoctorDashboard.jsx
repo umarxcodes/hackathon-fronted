@@ -23,16 +23,22 @@ export default function DoctorDashboard() {
   const today = getItems(appointmentsData).filter(
     (item) => formatDate(item.date, "yyyy-MM-dd") === todayISO()
   );
+  const completionRate = parseFloat(stats.completionRate || 0);
   return (
     <>
       <PageHeader
         title="Doctor Dashboard"
-        subtitle="Today's schedule, prescriptions, and AI actions."
+        subtitle="Today's schedule, prescriptions, and AI actions from live backend records."
       />
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
           title="Total Appointments"
-          value={stats.totalAppointments || stats.appointments || 0}
+          value={
+            stats.totalAppointments ||
+            stats.appointments ||
+            stats.monthlyAppointments ||
+            0
+          }
           icon={Calendar}
           color="#00D4C8"
         />
@@ -44,7 +50,7 @@ export default function DoctorDashboard() {
         />
         <StatCard
           title="Completion Rate"
-          value={`${stats.completionRate || 0}%`}
+          value={`${completionRate}%`}
           icon={Percent}
           color="#FFB830"
         />

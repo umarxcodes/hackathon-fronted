@@ -8,7 +8,23 @@ import prettier from "eslint-config-prettier";
 export default [
   { ignores: ["dist", "node_modules"] },
   {
+    files: ["scripts/**/*.js"],
+    languageOptions: {
+      globals: globals.node,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...prettier.rules,
+      "no-console": "off",
+    },
+  },
+  {
     files: ["**/*.{js,jsx}"],
+    ignores: ["scripts/**/*.js"],
     languageOptions: {
       globals: globals.browser,
       parserOptions: {

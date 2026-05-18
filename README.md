@@ -95,6 +95,14 @@ Preview production build:
 yarn preview
 ```
 
+Seed demo data into a backend:
+
+```bash
+API_URL=http://localhost:5003/api yarn seed:demo
+```
+
+The seeder creates/logs in test role accounts, creates patients, books appointments, marks statuses, writes prescriptions, runs AI symptom checks, runs risk flagging, and fetches analytics so charts have real backend records.
+
 ## Full Project Structure
 
 ```text

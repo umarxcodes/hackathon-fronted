@@ -31,7 +31,13 @@ export default function WritePrescriptionPage() {
   const { data: patientsData } = useGetPatientsQuery({ limit: 100 });
   const { data: appointmentsData } = useGetAppointmentsQuery();
   const [createPrescription, { isLoading }] = useCreatePrescriptionMutation();
-  const { register, control, handleSubmit, watch } = useForm({
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       patientId: "",
@@ -80,6 +86,9 @@ export default function WritePrescriptionPage() {
                 </option>
               ))}
             </select>
+            {errors.patientId ? (
+              <p className="mt-1 text-xs text-danger">Patient is required</p>
+            ) : null}
           </div>
           <div>
             <label className="label">Appointment</label>
@@ -154,13 +163,28 @@ export default function WritePrescriptionPage() {
                     </button>
                   ) : null}
                 </div>
+                {errors.medicines?.[index] ? (
+                  <div className="text-xs text-danger md:col-span-5">
+                    Medicine, dosage, frequency, and duration are required.
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
+          {errors.medicines?.root ? (
+            <p className="mt-2 text-xs text-danger">
+              {errors.medicines.root.message}
+            </p>
+          ) : null}
         </div>
         <div>
           <label className="label">Global Instructions</label>
           <textarea className="field min-h-28" {...register("instructions")} />
+          {errors.instructions ? (
+            <p className="mt-1 text-xs text-danger">
+              Instructions are required.
+            </p>
+          ) : null}
         </div>
         <button className="btn-primary" disabled={isLoading}>
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}{" "}

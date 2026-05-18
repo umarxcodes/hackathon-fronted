@@ -31,10 +31,22 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
           { path: "/dashboard", element: <DashboardPage /> },
-          { path: "/patients", element: <PatientsPage /> },
-          { path: "/patients/new", element: <PatientFormPage /> },
-          { path: "/patients/:id", element: <PatientDetailPage /> },
-          { path: "/patients/:id/edit", element: <PatientFormPage /> },
+          {
+            element: (
+              <RoleRoute allowedRoles={["admin", "doctor", "receptionist"]} />
+            ),
+            children: [
+              { path: "/patients", element: <PatientsPage /> },
+              { path: "/patients/:id", element: <PatientDetailPage /> },
+            ],
+          },
+          {
+            element: <RoleRoute allowedRoles={["admin", "receptionist"]} />,
+            children: [
+              { path: "/patients/new", element: <PatientFormPage /> },
+              { path: "/patients/:id/edit", element: <PatientFormPage /> },
+            ],
+          },
           { path: "/appointments", element: <AppointmentsPage /> },
           {
             element: (
@@ -45,7 +57,18 @@ const router = createBrowserRouter([
             ],
           },
           { path: "/appointments/:id", element: <AppointmentDetailPage /> },
-          { path: "/prescriptions", element: <PrescriptionsPage /> },
+          {
+            element: (
+              <RoleRoute allowedRoles={["admin", "doctor", "patient"]} />
+            ),
+            children: [
+              { path: "/prescriptions", element: <PrescriptionsPage /> },
+              {
+                path: "/prescriptions/:id",
+                element: <PrescriptionDetailPage />,
+              },
+            ],
+          },
           {
             element: <RoleRoute allowedRoles={["doctor"]} />,
             children: [
@@ -55,7 +78,6 @@ const router = createBrowserRouter([
               },
             ],
           },
-          { path: "/prescriptions/:id", element: <PrescriptionDetailPage /> },
           {
             element: <RoleRoute allowedRoles={["admin"]} />,
             children: [

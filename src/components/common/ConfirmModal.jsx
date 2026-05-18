@@ -10,8 +10,14 @@ export default function ConfirmModal({
 }) {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="panel w-full max-w-md p-5 shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="panel w-full max-w-md p-5 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="rounded-full bg-danger/15 p-2 text-danger">

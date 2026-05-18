@@ -50,7 +50,7 @@ export default function AdminDashboard() {
       key: "rate",
       label: "Rate",
       render: (row) => {
-        const rate = row.rate || row.completionRate || 0;
+        const rate = parseFloat(row.rate || row.completionRate || 0);
         const color =
           rate > 90 ? "bg-success" : rate > 70 ? "bg-warning" : "bg-danger";
         return (
@@ -71,7 +71,7 @@ export default function AdminDashboard() {
     <>
       <PageHeader
         title="Admin Dashboard"
-        subtitle="Clinic-wide performance and activity."
+        subtitle="Clinic-wide performance and activity from live backend records."
       />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -127,20 +127,26 @@ export default function AdminDashboard() {
         </div>
         <div className="panel p-5">
           <h2 className="mb-4 font-heading text-lg font-bold">Top Diagnoses</h2>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={(stats.topDiagnoses || []).slice(0, 5)}>
-              <CartesianGrid stroke="#2A3548" />
-              <XAxis dataKey="condition" stroke="#8B9CB0" />
-              <YAxis stroke="#8B9CB0" />
-              <Tooltip
-                contentStyle={{
-                  background: "#1A2235",
-                  border: "1px solid #2A3548",
-                }}
-              />
-              <Bar dataKey="count" fill="#00D4C8" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {stats.topDiagnoses?.length ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={(stats.topDiagnoses || []).slice(0, 5)}>
+                <CartesianGrid stroke="#2A3548" />
+                <XAxis dataKey="condition" stroke="#8B9CB0" />
+                <YAxis stroke="#8B9CB0" />
+                <Tooltip
+                  contentStyle={{
+                    background: "#1A2235",
+                    border: "1px solid #2A3548",
+                  }}
+                />
+                <Bar dataKey="count" fill="#00D4C8" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex h-[280px] items-center justify-center rounded-lg border border-dashed border-border text-center text-sm text-slate-400">
+              Run AI Symptom Checker to create diagnosis records for this chart.
+            </div>
+          )}
         </div>
       </div>
       <div className="mt-6">

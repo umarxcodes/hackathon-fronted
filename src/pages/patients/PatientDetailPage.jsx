@@ -24,15 +24,13 @@ export default function PatientDetailPage() {
   const { data, isLoading } = useGetPatientQuery(id);
   const { data: timelineData } = useGetTimelineQuery(id);
   const { downloadPDF, downloading } = usePDFDownload();
-  const patient = getPayload(data);
-  const appointments = patient.appointments || [];
-  const prescriptions = patient.prescriptions || [];
+  const payload = getPayload(data);
+  const patient = payload.patient || payload;
+  const appointments = payload.appointments || [];
+  const prescriptions = payload.prescriptions || [];
   const timeline = getItems(timelineData)
     .slice()
-    .sort(
-      (a, b) =>
-        new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)
-    );
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
   if (isLoading)
     return (
       <EmptyState
@@ -156,8 +154,16 @@ export default function PatientDetailPage() {
             {timeline.length ? (
               timeline.map((item) => (
                 <div
-                  key={item._id || `${item.type}-${item.date}`}
-                  className="mb-4 border-l-4 border-teal pl-4 last:mb-0"
+                  key={
+                    item._id || item.data?._id || `${item.type}-${item.date}`
+                  }
+                  className={`mb-4 border-l-4 pl-4 last:mb-0 ${
+                    item.type === "prescription"
+                      ? "border-success"
+                      : item.type === "diagnosis"
+                        ? "border-warning"
+                        : "border-teal"
+                  }`}
                 >
                   <div className="flex items-center gap-2 text-teal">
                     {item.type === "prescription" ? (
@@ -171,13 +177,14 @@ export default function PatientDetailPage() {
                       {item.type || "event"}
                     </span>
                     <span className="text-xs text-slate-400">
-                      {formatDate(item.date || item.createdAt)}
+                      {formatDate(item.date)}
                     </span>
                   </div>
                   <p className="mt-1 text-slate-200">
                     {item.summary ||
-                      item.notes ||
-                      item.status ||
+                      item.data?.notes ||
+                      item.data?.status ||
+                      item.data?.instructions ||
                       "Medical activity recorded."}
                   </p>
                 </div>

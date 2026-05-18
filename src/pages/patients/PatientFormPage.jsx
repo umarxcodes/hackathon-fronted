@@ -20,7 +20,7 @@ const schema = z.object({
   gender: z.enum(["male", "female", "other"]),
   contact: z.string().min(7),
   address: z.string().min(4),
-  bloodGroup: z.string().optional(),
+  bloodGroup: z.string().min(1, "Blood group is required"),
   allergiesText: z.string().optional(),
   medicalHistory: z.string().optional(),
 });
@@ -61,7 +61,7 @@ export default function PatientFormPage() {
         ? await updatePatient({ id, ...body }).unwrap()
         : await createPatient(body).unwrap();
       toast.success(edit ? "Patient updated" : "Patient created");
-      navigate(`/patients/${getPayload(res)._id || id}`);
+      navigate(edit ? `/patients/${getPayload(res)._id || id}` : "/patients");
     } catch (error) {
       toast.error(getApiError(error, "Save failed"));
     }
@@ -106,6 +106,11 @@ export default function PatientFormPage() {
               <option key={g}>{g}</option>
             ))}
           </select>
+          {errors.bloodGroup ? (
+            <p className="mt-1 text-xs text-danger">
+              {errors.bloodGroup.message}
+            </p>
+          ) : null}
         </div>
         <div>
           <label className="label">Allergies</label>

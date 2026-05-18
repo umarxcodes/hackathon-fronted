@@ -73,8 +73,9 @@ function PatientSelect({ value, onChange }) {
 function ResultCard({ result }) {
   if (!result) return null;
   const payload = getPayload(result);
+  const ai = payload.aiResponse || payload;
   const level =
-    `${payload.riskLevel || payload.level || "unknown"}`.toLowerCase();
+    `${ai.riskLevel || ai.level || (ai.hasRisk ? "high" : "unknown")}`.toLowerCase();
   const color =
     level === "high"
       ? "text-danger border-danger/40 bg-danger/10"
@@ -93,11 +94,58 @@ function ResultCard({ result }) {
           AI temporarily unavailable. Record was saved.
         </div>
       ) : null}
-      <pre className="whitespace-pre-wrap font-body text-sm text-slate-100">
-        {typeof payload === "string"
-          ? payload
-          : JSON.stringify(payload, null, 2)}
-      </pre>
+      {Array.isArray(ai.conditions) && ai.conditions.length ? (
+        <div className="mb-4">
+          <h3 className="mb-2 font-heading font-bold text-slate-100">
+            Possible Conditions
+          </h3>
+          <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-100">
+            {ai.conditions.map((condition) => (
+              <li key={condition}>{condition}</li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+      {Array.isArray(ai.suggestedTests) && ai.suggestedTests.length ? (
+        <div className="mb-4">
+          <h3 className="mb-2 font-heading font-bold text-slate-100">
+            Suggested Tests
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {ai.suggestedTests.map((test) => (
+              <span
+                key={test}
+                className="rounded-full bg-teal/15 px-3 py-1 text-sm text-teal"
+              >
+                {test}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {Array.isArray(ai.riskFactors) && ai.riskFactors.length ? (
+        <div className="mb-4">
+          <h3 className="mb-2 font-heading font-bold text-slate-100">
+            Risk Factors
+          </h3>
+          <ul className="list-disc space-y-1 pl-5 text-sm text-slate-100">
+            {ai.riskFactors.map((factor) => (
+              <li key={factor}>{factor}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {ai.recommendation ? (
+        <p className="text-sm text-slate-100">{ai.recommendation}</p>
+      ) : null}
+      {!ai.conditions?.length &&
+      !ai.suggestedTests?.length &&
+      !ai.riskFactors?.length &&
+      !ai.recommendation ? (
+        <pre className="whitespace-pre-wrap font-body text-sm text-slate-100">
+          {typeof ai === "string" ? ai : JSON.stringify(ai, null, 2)}
+        </pre>
+      ) : null}
     </div>
   );
 }
@@ -110,6 +158,7 @@ function SymptomTab() {
   const [gender, setGender] = useState("male");
   const [history, setHistory] = useState("");
   const [result, setResult] = useState(null);
+  const [formError, setFormError] = useState("");
   const [check, { isLoading }] = useSymptomCheckerMutation();
   const add = () => {
     if (symptom.trim()) {
@@ -118,14 +167,28 @@ function SymptomTab() {
     }
   };
   const submit = async () => {
+    if (!patientId) {
+      setFormError("Select a patient before running symptom checker.");
+      return;
+    }
+    if (!symptoms.length) {
+      setFormError("Add at least one symptom.");
+      return;
+    }
+    if (!age || Number(age) < 0 || Number(age) > 150) {
+      setFormError("Enter a valid age from 0 to 150.");
+      return;
+    }
+    setFormError("");
     try {
-      const res = await check({
+      const payload = {
         patientId,
         symptoms,
         age: Number(age),
         gender,
         history,
-      }).unwrap();
+      };
+      const res = await check(payload).unwrap();
       setResult(res);
       toast.success("AI analysis complete");
     } catch (error) {
@@ -199,7 +262,7 @@ function SymptomTab() {
       </div>
       <button
         className="btn-primary mt-5"
-        disabled={isLoading || !patientId || !symptoms.length}
+        disabled={isLoading}
         onClick={submit}
       >
         {isLoading ? (
@@ -209,6 +272,9 @@ function SymptomTab() {
         )}{" "}
         Run Symptom Check
       </button>
+      {formError ? (
+        <p className="mt-2 text-sm text-danger">{formError}</p>
+      ) : null}
       <ResultCard result={result} />
     </div>
   );
@@ -218,10 +284,17 @@ function ExplainTab() {
   const { data } = useGetPrescriptionsQuery();
   const [prescriptionId, setPrescriptionId] = useState("");
   const [result, setResult] = useState("");
+  const [formError, setFormError] = useState("");
   const [explain, { isLoading }] = usePrescriptionExplanationMutation();
   const submit = async () => {
+    if (!prescriptionId) {
+      setFormError("Select a prescription first.");
+      return;
+    }
+    setFormError("");
     try {
-      const res = await explain({ prescriptionId }).unwrap();
+      const payload = { prescriptionId };
+      const res = await explain(payload).unwrap();
       setResult(
         getPayload(res).explanation ||
           getPayload(res).aiExplanation ||
@@ -248,7 +321,7 @@ function ExplainTab() {
       </select>
       <button
         className="btn-primary mt-4"
-        disabled={isLoading || !prescriptionId}
+        disabled={isLoading}
         onClick={submit}
       >
         {isLoading ? (
@@ -258,6 +331,9 @@ function ExplainTab() {
         )}{" "}
         Explain Prescription
       </button>
+      {formError ? (
+        <p className="mt-2 text-sm text-danger">{formError}</p>
+      ) : null}
       {result ? (
         <div className="mt-5 rounded-lg border border-teal/40 bg-teal/10 p-4">
           <button
@@ -276,10 +352,17 @@ function ExplainTab() {
 function RiskTab() {
   const [patientId, setPatientId] = useState("");
   const [result, setResult] = useState(null);
+  const [formError, setFormError] = useState("");
   const [riskFlag, { isLoading }] = useRiskFlagMutation();
   const submit = async () => {
+    if (!patientId) {
+      setFormError("Select a patient before running risk flagging.");
+      return;
+    }
+    setFormError("");
     try {
-      const res = await riskFlag({ patientId }).unwrap();
+      const payload = { patientId };
+      const res = await riskFlag(payload).unwrap();
       setResult(res);
     } catch (error) {
       toast.error(getApiError(error, "Risk analysis failed"));
@@ -293,7 +376,7 @@ function RiskTab() {
       </div>
       <button
         className="btn-primary mt-4"
-        disabled={isLoading || !patientId}
+        disabled={isLoading}
         onClick={submit}
       >
         {isLoading ? (
@@ -303,6 +386,9 @@ function RiskTab() {
         )}{" "}
         Run Risk Flagging
       </button>
+      {formError ? (
+        <p className="mt-2 text-sm text-danger">{formError}</p>
+      ) : null}
       <ResultCard result={result} />
     </div>
   );
